@@ -7,6 +7,15 @@ func RoundCurrency(val float64) float64 {
 	return math.Round(val*100) / 100
 }
 
+// ComputeUnitBuyPrice calculates the per-unit buy price from total batch price and initial stock.
+// Returns 0 when initialStock is <= 0.
+func ComputeUnitBuyPrice(totalPrice float64, initialStock int64) float64 {
+	if initialStock <= 0 {
+		return 0
+	}
+	return RoundCurrency(totalPrice / float64(initialStock))
+}
+
 // ComputeSimpleAverageBuyPrice calculates the simple arithmetic mean of batch buy prices.
 // Returns 0 when there are no batches.
 func ComputeSimpleAverageBuyPrice(buyPrices []float64) float64 {

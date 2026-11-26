@@ -34,7 +34,7 @@ func NewBatchService(batchRepo *repository.BatchRepository, productRepo *reposit
 type CreateBatchInput struct {
 	ProductID    uint     `json:"product_id" binding:"required,gt=0"`
 	BatchCode    string   `json:"batch_code" binding:"max=100"`
-	BuyPrice     *float64 `json:"buy_price" binding:"required,gte=0"`
+	TotalPrice   *float64 `json:"total_price" binding:"required,gte=0"`
 	InitialStock int64    `json:"initial_stock" binding:"required,gt=0"`
 	PurchasedAt  string   `json:"purchased_at"`
 	Notes        string   `json:"notes"`
@@ -42,7 +42,7 @@ type CreateBatchInput struct {
 
 type UpdateBatchInput struct {
 	BatchCode    *string  `json:"batch_code" binding:"omitempty,min=1,max=100"`
-	BuyPrice     *float64 `json:"buy_price" binding:"omitempty,gte=0"`
+	TotalPrice   *float64 `json:"total_price" binding:"omitempty,gte=0"`
 	InitialStock *int64   `json:"initial_stock" binding:"omitempty,gt=0"`
 	PurchasedAt  *string  `json:"purchased_at"`
 	Notes        *string  `json:"notes"`
@@ -67,11 +67,15 @@ func (s *BatchService) Create(userID uint, input CreateBatchInput) (*models.Stoc
 		batchCode = fmt.Sprintf("BATCH-%s", time.Now().Format("20060102-150405"))
 	}
 
+	totalPrice := RoundCurrency(*input.TotalPrice)
+	unitBuyPrice := ComputeUnitBuyPrice(totalPrice, input.InitialStock)
+
 	batch := &models.StockBatch{
 		UserID:       userID,
 		ProductID:    input.ProductID,
 		BatchCode:    batchCode,
-		BuyPrice:     RoundCurrency(*input.BuyPrice),
+		TotalPrice:   totalPrice,
+		BuyPrice:     unitBuyPrice,
 		InitialStock: input.InitialStock,
 		SoldStock:    0,
 		PurchasedAt:  purchasedAt,
@@ -115,11 +119,15 @@ func (s *BatchService) Update(userID, batchID uint, input UpdateBatchInput) (*mo
 			return err
 		}
 
+		pricingInputChanged := false
 		if input.InitialStock != nil {
 			if *input.InitialStock < batch.SoldStock {
 				return ErrInitialStockBelowSold
 			}
-			batch.InitialStock = *input.InitialStock
+			if *input.InitialStock != batch.InitialStock {
+				batch.InitialStock = *input.InitialStock
+				pricingInputChanged = true
+			}
 		}
 		if input.BatchCode != nil {
 			batch.BatchCode = strings.TrimSpace(*input.BatchCode)
@@ -135,11 +143,19 @@ func (s *BatchService) Update(userID, batchID uint, input UpdateBatchInput) (*mo
 			batch.Notes = strings.TrimSpace(*input.Notes)
 		}
 
+		if input.TotalPrice != nil {
+			rounded := RoundCurrency(*input.TotalPrice)
+			if rounded != batch.TotalPrice {
+				batch.TotalPrice = rounded
+				pricingInputChanged = true
+			}
+		}
+
 		buyPriceChanged := false
-		if input.BuyPrice != nil {
-			rounded := RoundCurrency(*input.BuyPrice)
-			if rounded != batch.BuyPrice {
-				batch.BuyPrice = rounded
+		if pricingInputChanged {
+			newBuyPrice := ComputeUnitBuyPrice(batch.TotalPrice, batch.InitialStock)
+			if newBuyPrice != batch.BuyPrice {
+				batch.BuyPrice = newBuyPrice
 				buyPriceChanged = true
 			}
 		}
@@ -148,7 +164,7 @@ func (s *BatchService) Update(userID, batchID uint, input UpdateBatchInput) (*mo
 			return err
 		}
 
-		// Keep sale allocation cost and sale modal/netto consistent if batch buy_price was corrected.
+		// Keep sale allocation cost and sale modal/netto consistent if derived unit buy_price changed.
 		if buyPriceChanged && batch.SoldStock > 0 {
 			if err := recalculateSalesForBatch(tx, batch.ID, batch.BuyPrice); err != nil {
 				return err

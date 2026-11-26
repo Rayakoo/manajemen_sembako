@@ -62,7 +62,7 @@ components:
           example: Ayam kampung segar ukuran sedang
     BatchRequest:
       type: object
-      required: [product_id, buy_price, initial_stock]
+      required: [product_id, total_price, initial_stock]
       properties:
         product_id:
           type: integer
@@ -70,10 +70,11 @@ components:
         batch_code:
           type: string
           example: BATCH-20261126-01
-        buy_price:
+        total_price:
           type: number
           format: float
-          example: 25000
+          description: Total harga pembelian satu batch keseluruhan (buy_price per unit dihitung otomatis = total_price / initial_stock)
+          example: 500000
         initial_stock:
           type: integer
           example: 20
@@ -88,9 +89,10 @@ components:
       properties:
         batch_code:
           type: string
-        buy_price:
+        total_price:
           type: number
           format: float
+          description: Total harga pembelian satu batch keseluruhan (buy_price per unit otomatis dihitung ulang)
         initial_stock:
           type: integer
         purchased_at:

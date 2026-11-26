@@ -37,12 +37,13 @@ type ProductWithSummary struct {
 	MinSellPrice     float64 `json:"min_sell_price"`
 }
 
-// StockBatch records a single purchase batch with its buy price and stock movement.
+// StockBatch records a single purchase batch with its total batch price, derived unit buy price, and stock movement.
 type StockBatch struct {
 	ID           uint      `gorm:"primaryKey" json:"id"`
 	UserID       uint      `gorm:"not null;index" json:"user_id"`
 	ProductID    uint      `gorm:"not null;index" json:"product_id"`
 	BatchCode    string    `gorm:"size:100;not null" json:"batch_code"`
+	TotalPrice   float64   `gorm:"type:numeric(15,2);not null" json:"total_price"`
 	BuyPrice     float64   `gorm:"type:numeric(15,2);not null" json:"buy_price"`
 	InitialStock int64     `gorm:"not null" json:"initial_stock"`
 	SoldStock    int64     `gorm:"not null;default:0" json:"sold_stock"`

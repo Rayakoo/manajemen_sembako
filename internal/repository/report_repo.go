@@ -68,7 +68,7 @@ func (r *ReportRepository) GetFinancialSummary(userID uint, filter FinancialRepo
 				COALESCE(SUM(sb.sold_stock), 0) AS current_sold_stock,
 				COALESCE(SUM(sb.initial_stock - sb.sold_stock), 0) AS remaining_stock,
 				COALESCE(ROUND(AVG(sb.buy_price), 2), 0) AS min_sell_price,
-				COALESCE(SUM(sb.initial_stock * sb.buy_price), 0) AS total_purchase_modal
+				COALESCE(SUM(sb.total_price), 0) AS total_purchase_modal
 			FROM products p
 			LEFT JOIN stock_batches sb ON ` + batchJoinCond + `
 			WHERE p.user_id = ?

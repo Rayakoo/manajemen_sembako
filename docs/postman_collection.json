@@ -170,7 +170,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"product_id\": {{product_id}},\n  \"batch_code\": \"BATCH-01\",\n  \"buy_price\": 25000,\n  \"initial_stock\": 20,\n  \"purchased_at\": \"2026-11-26\",\n  \"notes\": \"Pembelian batch pertama\"\n}"
+              "raw": "{\n  \"product_id\": {{product_id}},\n  \"batch_code\": \"BATCH-01\",\n  \"total_price\": 500000,\n  \"initial_stock\": 20,\n  \"purchased_at\": \"2026-11-26\",\n  \"notes\": \"Pembelian batch pertama\"\n}"
             },
             "url": "{{base_url}}/api/v1/batches"
           }
@@ -193,7 +193,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"buy_price\": 26000,\n  \"initial_stock\": 25\n}"
+              "raw": "{\n  \"total_price\": 650000,\n  \"initial_stock\": 25\n}"
             },
             "url": "{{base_url}}/api/v1/batches/{{batch_id}}"
           }

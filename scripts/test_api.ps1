@@ -41,11 +41,13 @@ $prodBody = @{
 $prod = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/products" -Headers $headers -ContentType "application/json" -Body $prodBody
 $productId = $prod.data.id
 
-Write-Host "5. Adding Batch 1 (10 @ 20000) & Batch 2 (10 @ 30000)..." -ForegroundColor Cyan
-$b1 = @{ product_id = $productId; batch_code = "B1"; buy_price = 20000; initial_stock = 10; purchased_at = "2026-11-25" } | ConvertTo-Json
-$b2 = @{ product_id = $productId; batch_code = "B2"; buy_price = 30000; initial_stock = 10; purchased_at = "2026-11-26" } | ConvertTo-Json
-Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/batches" -Headers $headers -ContentType "application/json" -Body $b1 | Out-Null
-Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/batches" -Headers $headers -ContentType "application/json" -Body $b2 | Out-Null
+Write-Host "5. Adding Batch 1 (10 pcs, total 200000 -> 20000/pcs) & Batch 2 (10 pcs, total 300000 -> 30000/pcs)..." -ForegroundColor Cyan
+$b1 = @{ product_id = $productId; batch_code = "B1"; total_price = 200000; initial_stock = 10; purchased_at = "2026-11-25" } | ConvertTo-Json
+$b2 = @{ product_id = $productId; batch_code = "B2"; total_price = 300000; initial_stock = 10; purchased_at = "2026-11-26" } | ConvertTo-Json
+$batch1Res = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/batches" -Headers $headers -ContentType "application/json" -Body $b1
+$batch2Res = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/batches" -Headers $headers -ContentType "application/json" -Body $b2
+Assert-Equal $batch1Res.data.buy_price 20000 "Batch 1 derived unit buy_price should be 20000"
+Assert-Equal $batch2Res.data.buy_price 30000 "Batch 2 derived unit buy_price should be 30000"
 
 $detail = Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/v1/products/$productId" -Headers $headers
 Assert-Equal $detail.data.total_bought_stock 20 "Total bought stock should be 20"

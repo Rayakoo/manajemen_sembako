@@ -11,7 +11,7 @@ Backend REST API untuk manajemen produk, pencatatan harga beli per batch, pelaca
    - Tambah, lihat, ubah, dan hapus produk.
    - Setiap produk otomatis menampilkan ringkasan stok (`total_bought_stock`, `total_sold_stock`, `remaining_stock`) serta `min_sell_price`.
 3. **Pencatatan Harga Beli & Stok per Batch (CRUD)**
-   - Catat `buy_price`, `initial_stock` (stok dibeli), `sold_stock` (stok terjual), dan `remaining_stock` (stok sisa) per batch.
+   - Input `total_price` (total harga beli keseluruhan batch) dan `initial_stock` (jumlah pcs/stok dibeli); endpoint otomatis menghitung `buy_price` per unit (`total_price / initial_stock`), serta melacak `sold_stock` (stok terjual) dan `remaining_stock` (stok sisa) per batch.
    - Validasi agar `initial_stock` tidak bisa diubah lebih kecil dari `sold_stock` dan batch yang sudah terjual tidak bisa dihapus sembarangan.
 4. **Harga Jual Minimal (Simple Average)**
    - Dihitung dari rata-rata harga beli seluruh batch produk tersebut (`AVG(buy_price)`), sehingga penjualan di atas/sama dengan nilai ini menjaga agar tidak rugi.
@@ -68,7 +68,7 @@ Base URL: `http://localhost:8080/api/v1`
 - `DELETE /products/:id` — Hapus produk
 
 ### Stock Batches *(Bearer Token)*
-- `POST /batches` — Tambah batch pembelian (`product_id`, `batch_code`, `buy_price`, `initial_stock`, `purchased_at`, `notes`)
+- `POST /batches` — Tambah batch pembelian (`product_id`, `batch_code`, `total_price`, `initial_stock`, `purchased_at`, `notes`) -> otomatis menghitung `buy_price = total_price / initial_stock`
 - `GET /batches?product_id=1` — List batch (opsional filter `product_id`)
 - `GET /batches/:id` — Detail batch
 - `PUT /batches/:id` — Update batch

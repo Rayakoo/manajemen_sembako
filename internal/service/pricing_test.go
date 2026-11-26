@@ -2,6 +2,49 @@ package service
 
 import "testing"
 
+func TestComputeUnitBuyPrice(t *testing.T) {
+	tests := []struct {
+		name         string
+		totalPrice   float64
+		initialStock int64
+		want         float64
+	}{
+		{
+			name:         "zero stock returns zero",
+			totalPrice:   500000,
+			initialStock: 0,
+			want:         0,
+		},
+		{
+			name:         "exact division",
+			totalPrice:   500000,
+			initialStock: 20,
+			want:         25000,
+		},
+		{
+			name:         "rounded to two decimals",
+			totalPrice:   100000,
+			initialStock: 3,
+			want:         33333.33,
+		},
+		{
+			name:         "zero total price",
+			totalPrice:   0,
+			initialStock: 10,
+			want:         0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := ComputeUnitBuyPrice(tc.totalPrice, tc.initialStock)
+			if got != tc.want {
+				t.Fatalf("ComputeUnitBuyPrice(%.2f, %d) = %.2f, want %.2f", tc.totalPrice, tc.initialStock, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestComputeSimpleAverageBuyPrice(t *testing.T) {
 	tests := []struct {
 		name   string
