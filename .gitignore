@@ -1,0 +1,42 @@
+# Environment variables & credentials
+.env
+.env.*
+
+# Keys, certificates & OAuth/service account files
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+client_secret*.json
+credentials*.json
+service-account*.json
+
+# Go binaries, build outputs & test coverage
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.txt
+coverage.html
+/bin/
+/dist/
+/tmp/
+/server
+
+# Local databases & logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# OS & editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo

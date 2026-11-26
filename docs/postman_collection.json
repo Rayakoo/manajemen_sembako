@@ -1,0 +1,304 @@
+{
+  "info": {
+    "name": "Ayam Batu Inventory & Financial API",
+    "_postman_id": "a6f7f810-32a8-4b75-8e92-0a0a00000001",
+    "description": "Koleksi Postman siap pakai untuk menguji seluruh endpoint CRUD, stok batch, harga jual minimal, penjualan harian, dan laporan keuangan.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "product_id", "value": "1" },
+    { "key": "batch_id", "value": "1" },
+    { "key": "sale_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Sign Up",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.token) { pm.collectionVariables.set('token', res.data.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Santoso\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/auth/signup"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.token) { pm.collectionVariables.set('token', res.data.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"budi@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) { pm.collectionVariables.set('product_id', String(res.data.id)); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ayam Kampung Segar\",\n  \"sku\": \"AYM-001\",\n  \"unit\": \"ekor\",\n  \"description\": \"Ayam kampung ukuran sedang\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/products"
+          }
+        },
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/products"
+          }
+        },
+        {
+          "name": "Get Product Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/products/{{product_id}}"
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ayam Kampung Premium\",\n  \"unit\": \"ekor\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/products/{{product_id}}"
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/products/{{product_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Batches",
+      "item": [
+        {
+          "name": "Create Batch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) { pm.collectionVariables.set('batch_id', String(res.data.id)); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": {{product_id}},\n  \"batch_code\": \"BATCH-01\",\n  \"buy_price\": 25000,\n  \"initial_stock\": 20,\n  \"purchased_at\": \"2026-11-26\",\n  \"notes\": \"Pembelian batch pertama\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/batches"
+          }
+        },
+        {
+          "name": "List Batches",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/batches?product_id={{product_id}}"
+          }
+        },
+        {
+          "name": "Update Batch",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"buy_price\": 26000,\n  \"initial_stock\": 25\n}"
+            },
+            "url": "{{base_url}}/api/v1/batches/{{batch_id}}"
+          }
+        },
+        {
+          "name": "Delete Batch",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/batches/{{batch_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sales",
+      "item": [
+        {
+          "name": "Create Daily Sale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) { pm.collectionVariables.set('sale_id', String(res.data.id)); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": {{product_id}},\n  \"quantity\": 5,\n  \"sell_price\": 32000,\n  \"sold_at\": \"2026-11-26\",\n  \"notes\": \"Penjualan harian\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/sales"
+          }
+        },
+        {
+          "name": "List Sales",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/sales?product_id={{product_id}}"
+          }
+        },
+        {
+          "name": "Daily Sales Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/sales/daily"
+          }
+        },
+        {
+          "name": "Update Sale",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 6,\n  \"sell_price\": 33000\n}"
+            },
+            "url": "{{base_url}}/api/v1/sales/{{sale_id}}"
+          }
+        },
+        {
+          "name": "Delete Sale",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/sales/{{sale_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Financial Report (Modal, Bruto, Netto)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/reports/financial"
+          }
+        },
+        {
+          "name": "Daily Financial Report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/v1/reports/daily"
+          }
+        }
+      ]
+    }
+  ]
+}

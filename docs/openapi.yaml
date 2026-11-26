@@ -1,0 +1,511 @@
+openapi: 3.0.3
+info:
+  title: Ayam Batu Inventory & Financial API
+  version: 1.0.0
+  description: |
+    Backend API untuk pencatatan produk, harga beli per batch, pelacakan stok (dibeli, terjual, sisa),
+    perhitungan harga jual minimal (rata-rata harga beli), pencatatan penjualan harian (FIFO),
+    dan laporan keuangan (modal, bruto, netto) dengan autentikasi JWT.
+servers:
+  - url: /
+    description: Current Server
+  - url: http://localhost:8080
+    description: Local Default (8080)
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    SignUpRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          example: Budi Santoso
+        email:
+          type: string
+          format: email
+          example: budi@example.com
+        password:
+          type: string
+          minLength: 6
+          example: secret123
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: budi@example.com
+        password:
+          type: string
+          example: secret123
+    ProductRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Ayam Kampung Segar
+        sku:
+          type: string
+          example: AYM-001
+        unit:
+          type: string
+          example: ekor
+        description:
+          type: string
+          example: Ayam kampung segar ukuran sedang
+    BatchRequest:
+      type: object
+      required: [product_id, buy_price, initial_stock]
+      properties:
+        product_id:
+          type: integer
+          example: 1
+        batch_code:
+          type: string
+          example: BATCH-20261126-01
+        buy_price:
+          type: number
+          format: float
+          example: 25000
+        initial_stock:
+          type: integer
+          example: 20
+        purchased_at:
+          type: string
+          example: "2026-11-26"
+        notes:
+          type: string
+          example: Supplier Pak Joko
+    BatchUpdateRequest:
+      type: object
+      properties:
+        batch_code:
+          type: string
+        buy_price:
+          type: number
+          format: float
+        initial_stock:
+          type: integer
+        purchased_at:
+          type: string
+        notes:
+          type: string
+    SaleRequest:
+      type: object
+      required: [product_id, quantity, sell_price]
+      properties:
+        product_id:
+          type: integer
+          example: 1
+        quantity:
+          type: integer
+          example: 5
+        sell_price:
+          type: number
+          format: float
+          example: 32000
+        sold_at:
+          type: string
+          example: "2026-11-26"
+        notes:
+          type: string
+          example: Penjualan pagi
+        allow_below_min:
+          type: boolean
+          default: false
+          example: false
+paths:
+  /health:
+    get:
+      summary: Health Check
+      tags: [System]
+      responses:
+        "200":
+          description: Service healthy
+  /api/v1/auth/signup:
+    post:
+      summary: Daftar Akun Baru (Sign Up)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignUpRequest"
+      responses:
+        "201":
+          description: Account created with JWT token
+        "409":
+          description: Email already registered
+  /api/v1/auth/login:
+    post:
+      summary: Login User
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful with JWT token
+        "401":
+          description: Invalid credentials
+  /api/v1/auth/me:
+    get:
+      summary: Profil User Login
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Authenticated user profile
+  /api/v1/auth/google/login:
+    get:
+      summary: Login via Google OAuth 2.0 (Redirect)
+      description: Buka URL ini langsung di browser untuk redirect ke halaman login Google.
+      tags: [Auth]
+      responses:
+        "307":
+          description: Redirect to Google OAuth consent screen
+        "503":
+          description: Google OAuth not configured
+  /api/v1/auth/google/callback:
+    get:
+      summary: Callback Google OAuth 2.0
+      tags: [Auth]
+      parameters:
+        - in: query
+          name: code
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: state
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Google login successful with JWT token
+        "302":
+          description: Redirect to GOOGLE_FRONTEND_REDIRECT_URL with ?token=...
+  /api/v1/products:
+    post:
+      summary: Tambah Produk
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductRequest"
+      responses:
+        "201":
+          description: Product created
+    get:
+      summary: List Produk beserta Ringkasan Stok & Harga Jual Minimal
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of products
+  /api/v1/products/{id}:
+    get:
+      summary: Detail Produk beserta Daftar Batch
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product detail
+    put:
+      summary: Update Produk
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductRequest"
+      responses:
+        "200":
+          description: Product updated
+    delete:
+      summary: Hapus Produk
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product deleted
+  /api/v1/batches:
+    post:
+      summary: Catat Batch Pembelian & Harga Beli
+      tags: [Batches]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchRequest"
+      responses:
+        "201":
+          description: Batch created
+    get:
+      summary: List Batch Pembelian (Stok Dibeli, Terjual, Sisa)
+      tags: [Batches]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: product_id
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of batches
+  /api/v1/batches/{id}:
+    get:
+      summary: Detail Batch
+      tags: [Batches]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Batch detail
+    put:
+      summary: Update Batch
+      tags: [Batches]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchUpdateRequest"
+      responses:
+        "200":
+          description: Batch updated
+    delete:
+      summary: Hapus Batch (jika sold_stock == 0)
+      tags: [Batches]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Batch deleted
+        "409":
+          description: Cannot delete batch with sold stock
+  /api/v1/sales:
+    post:
+      summary: Catat Penjualan Harian
+      tags: [Sales]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaleRequest"
+      responses:
+        "201":
+          description: Sale recorded
+        "409":
+          description: Insufficient remaining stock
+        "422":
+          description: Sell price below minimum sell price
+    get:
+      summary: List Transaksi Penjualan
+      tags: [Sales]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: product_id
+          schema:
+            type: integer
+        - in: query
+          name: date
+          schema:
+            type: string
+            example: "2026-11-26"
+        - in: query
+          name: start_date
+          schema:
+            type: string
+        - in: query
+          name: end_date
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of sales
+  /api/v1/sales/daily:
+    get:
+      summary: Rekap Produk Terjual Per Hari
+      tags: [Sales]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: product_id
+          schema:
+            type: integer
+        - in: query
+          name: start_date
+          schema:
+            type: string
+        - in: query
+          name: end_date
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Daily sales summary
+  /api/v1/sales/{id}:
+    get:
+      summary: Detail Transaksi Penjualan
+      tags: [Sales]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sale detail with batch allocations
+    put:
+      summary: Update Transaksi Penjualan
+      tags: [Sales]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaleRequest"
+      responses:
+        "200":
+          description: Sale updated
+    delete:
+      summary: Hapus Transaksi Penjualan (Kembalikan Stok Batch)
+      tags: [Sales]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sale deleted
+  /api/v1/reports/financial:
+    get:
+      summary: Laporan Keuangan (Modal, Bruto, Netto)
+      tags: [Reports]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: product_id
+          schema:
+            type: integer
+        - in: query
+          name: start_date
+          schema:
+            type: string
+        - in: query
+          name: end_date
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Financial summary with modal, bruto, netto, and per-product breakdown
+  /api/v1/reports/daily:
+    get:
+      summary: Laporan Keuangan Harian
+      tags: [Reports]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: product_id
+          schema:
+            type: integer
+        - in: query
+          name: start_date
+          schema:
+            type: string
+        - in: query
+          name: end_date
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Daily modal, bruto, netto summary
