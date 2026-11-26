@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-ayam_batu}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
@@ -26,7 +26,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      APP_PORT: ${APP_PORT:-8080}
+      APP_PORT: 8080
       GIN_MODE: ${GIN_MODE:-release}
       DB_HOST: postgres
       DB_PORT: 5432
@@ -41,7 +41,7 @@ services:
       GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-http://localhost:8080/api/v1/auth/google/callback}
       GOOGLE_FRONTEND_REDIRECT_URL: ${GOOGLE_FRONTEND_REDIRECT_URL:-}
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
 
 volumes:
   postgres_data:
